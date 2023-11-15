@@ -1,0 +1,69 @@
+name: Different Job
+
+on:
+  workflow_dispatch: # manual trigger
+    inputs:
+      comment:
+        type: string
+        description: "Comment"
+        required: true
+env:
+  COMMENT: ${{ github.event.inputs.comment }}
+jobs:
+  do-stuff:
+    name: Do Stuff
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    outputs:
+      date: ${{ steps.get-date.outputs.date }}
+    steps:
+      - name: Update README
+        id: get-date
+        run: |
+          echo "sleeping..."
+          sleep 10s
+          DATE=$(date '+%A %b %d, %Y at %H:%M:%S %Z')
+          echo ${DATE}
+          echo "date=${DATE}" >> $GITHUB_OUTPUT
+
+  wait:
+    name: Wait
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: do-stuff
+    if: ${{ success() }}
+    environment: Transfer Completed
+    steps:
+    - name: Approved
+    - run: echo "Approved!"
+
+  trigger:
+    name: Trigger
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: [do-stuff, wait]
+    if: ${{ success() }}
+    steps:    
+    - name: Trigger Repository Dispatch for Transfer Complete Workflow
+      id: repository-dispatch
+      uses: Brightspace/third-party-actions@actions/github-script
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        result-encoding: string
+        script: |
+          try {
+            await github.repos.createDispatchEvent({
+              owner: 'svanherk',
+              repo: 'test-token-expiry',
+              event_type: 'Transfer Complete',
+              client_payload: {
+                "comment": process.env.COMMENT,
+                "date": "${{ needs.do-stuff.outputs.date }}"
+              }
+            });
+            console.log('Workflow dispatch event created.');
+          } catch (e) {
+            console.log(`\n${e}`);
+            console.log('Could not create workflow dispatch event.');
+            return 'error';
+          }
