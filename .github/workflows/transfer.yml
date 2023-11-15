@@ -1,0 +1,22 @@
+name: Transfer Complete
+
+on:
+  repository_dispatch:
+    types: ['Transfer Complete']
+
+env:
+  COMMENT: ${{ github.event.client_payload.comment }}
+  DATE: ${{ github.event.client_payload.date }}
+
+jobs:
+  success:
+    name: Success
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Print Info
+        run: |
+          echo "sleeping..."
+          sleep 10s
+          echo ${COMMENT}
+          echo ${DATE}
