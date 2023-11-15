@@ -35,7 +35,7 @@ jobs:
     environment: Transfer Completed
     steps:
     - name: Approved
-    - run: echo "Approved!"
+      run: echo "Approved!"
 
   trigger:
     name: Trigger
